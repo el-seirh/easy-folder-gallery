@@ -49,7 +49,7 @@ gallery with albums, thumbnails and a lightbox.
    (Settings → Easy Folder Gallery):
 
    ```
-   [easy-folder-gallery dir="my-photos" title="Photos" thumb_size="200" preview_count="3"]
+   [easy-folder-gallery dir="my-photos" title="Photos" thumb_size="200" preview_count="3" columns="2"]
    ```
 
 ## Requirements

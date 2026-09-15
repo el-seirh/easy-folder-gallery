@@ -30,7 +30,7 @@ class EFG_Renderer {
 
 	/**
 	 * [easy-folder-gallery] — all attributes are optional and default to the plugin settings:
-	 * dir (folder below wp-content/uploads), title, thumb_size, preview_count.
+	 * dir (folder below wp-content/uploads), title, thumb_size, preview_count, columns.
 	 */
 	public static function shortcode( $atts ) {
 		$settings = EFG_Settings::get();
@@ -40,6 +40,8 @@ class EFG_Renderer {
 				'title'         => $settings['title'],
 				'thumb_size'    => $settings['thumb_size'],
 				'preview_count' => $settings['preview_count'],
+				'columns'       => $settings['columns'],
+				'hide_title'    => $settings['hide_title'],
 			),
 			$atts,
 			'easy-folder-gallery'
@@ -48,13 +50,21 @@ class EFG_Renderer {
 		$uploads = wp_upload_dir();
 		$dir     = self::sanitize_relative_dir( $atts['dir'] );
 
+		// The title is mandatory — it names the overview in the "Back to …" links.
+		$title = trim( (string) $atts['title'] );
+		if ( '' === $title ) {
+			$title = EFG_Settings::defaults()['title'];
+		}
+
 		$ctx = array(
 			'root'          => $uploads['basedir'] . '/' . $dir,
 			'root_url'      => $uploads['baseurl'] . '/' . $dir,
 			'base_url'      => get_permalink(),
-			'title'         => (string) $atts['title'],
+			'title'         => $title,
 			'thumb_size'    => max( 50, (int) $atts['thumb_size'] ),
 			'preview_count' => max( 1, (int) $atts['preview_count'] ),
+			'columns'       => max( 1, min( 6, (int) $atts['columns'] ) ),
+			'hide_title'    => filter_var( $atts['hide_title'], FILTER_VALIDATE_BOOLEAN ),
 		);
 
 		if ( ! is_dir( $ctx['root'] ) ) {
@@ -99,8 +109,10 @@ class EFG_Renderer {
 	 * Top level: one card per album with gallery count, preview thumbs and optional info text.
 	 */
 	private static function render_overview( $ctx ) {
-		$out  = '<div class="efg">';
-		$out .= '<h1 class="efg-title">' . esc_html( $ctx['title'] ) . '</h1>';
+		$out = self::open_wrapper( $ctx );
+		if ( ! $ctx['hide_title'] ) {
+			$out .= '<h1 class="efg-title">' . esc_html( $ctx['title'] ) . '</h1>';
+		}
 		$out .= '<div class="efg-grid">';
 
 		foreach ( self::subdirs( $ctx['root'] ) as $album ) {
@@ -142,7 +154,7 @@ class EFG_Renderer {
 	private static function render_album( $ctx ) {
 		$album_path = $ctx['root'] . '/' . $ctx['album'];
 
-		$out  = '<div class="efg">';
+		$out  = self::open_wrapper( $ctx );
 		$out .= '<p class="efg-backlink"><a href="' . esc_url( $ctx['base_url'] ) . '">&larr; ' .
 			sprintf(
 				/* translators: %s: title of the gallery overview page */
@@ -199,12 +211,12 @@ class EFG_Renderer {
 		$gallery_url  = $ctx['root_url'] . '/' . $ctx['album'] . '/' . $ctx['gallery'];
 		$album_url    = add_query_arg( self::QUERY_ALBUM, rawurlencode( $ctx['album'] ), $ctx['base_url'] );
 
-		$backlink = '<p class="efg-backlink">&larr; ' . sprintf(
-			/* translators: 1: link to the gallery overview, 2: link to the album */
-			esc_html__( 'Back to %1$s / %2$s', 'easy-folder-gallery' ),
-			'<a href="' . esc_url( $ctx['base_url'] ) . '">' . esc_html( $ctx['title'] ) . '</a>',
-			'<a href="' . esc_url( $album_url ) . '">' . esc_html( $ctx['album'] ) . '</a>'
-		) . '</p>';
+		$backlink = '<p class="efg-backlink"><a href="' . esc_url( $album_url ) . '">&larr; ' .
+			sprintf(
+				/* translators: %s: name of the album */
+				esc_html__( 'Back to %s', 'easy-folder-gallery' ),
+				esc_html( $ctx['album'] )
+			) . '</a></p>';
 
 		$out  = '<div class="efg">' . $backlink;
 		$out .= '<h1 class="efg-title">' . esc_html( $ctx['gallery'] ) . '</h1>';
@@ -229,6 +241,13 @@ class EFG_Renderer {
 		}
 		$out .= '</div>' . $backlink . '</div>';
 		return $out;
+	}
+
+	/**
+	 * The common wrapper element; the column count feeds the grid via a CSS custom property.
+	 */
+	private static function open_wrapper( $ctx ) {
+		return '<div class="efg" style="--efg-columns:' . (int) $ctx['columns'] . '">';
 	}
 
 	/**

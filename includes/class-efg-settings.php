@@ -24,6 +24,8 @@ class EFG_Settings {
 			'title'         => __( 'Galleries', 'easy-folder-gallery' ),
 			'thumb_size'    => 150,
 			'preview_count' => 3,
+			'columns'       => 2,
+			'hide_title'    => 0,
 		);
 	}
 
@@ -85,16 +87,26 @@ class EFG_Settings {
 			'easy-folder-gallery',
 			'efg_main'
 		);
+		add_settings_field(
+			'efg_columns',
+			__( 'Grid columns', 'easy-folder-gallery' ),
+			array( __CLASS__, 'field_columns' ),
+			'easy-folder-gallery',
+			'efg_main'
+		);
 	}
 
 	public static function sanitize( $input ) {
 		$input    = (array) $input;
 		$defaults = self::defaults();
+		$title    = trim( sanitize_text_field( $input['title'] ?? '' ) );
 		return array(
 			'dir'           => sanitize_text_field( $input['dir'] ?? $defaults['dir'] ),
-			'title'         => sanitize_text_field( $input['title'] ?? $defaults['title'] ),
+			'title'         => '' !== $title ? $title : $defaults['title'],
 			'thumb_size'    => max( 50, min( 1000, (int) ( $input['thumb_size'] ?? $defaults['thumb_size'] ) ) ),
 			'preview_count' => max( 1, min( 10, (int) ( $input['preview_count'] ?? $defaults['preview_count'] ) ) ),
+			'columns'       => max( 1, min( 6, (int) ( $input['columns'] ?? $defaults['columns'] ) ) ),
+			'hide_title'    => empty( $input['hide_title'] ) ? 0 : 1,
 		);
 	}
 
@@ -111,11 +123,20 @@ class EFG_Settings {
 	public static function field_title() {
 		$settings = self::get();
 		printf(
-			'<input type="text" name="%s[title]" value="%s" class="regular-text">',
+			'<input type="text" name="%s[title]" value="%s" class="regular-text" required>',
 			esc_attr( self::OPTION ),
 			esc_attr( $settings['title'] )
 		);
-		echo '<p class="description">' . esc_html__( 'Heading shown on the gallery overview page (leave empty if you want no extra heading).', 'easy-folder-gallery' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Name of the gallery overview — shown as its heading and used in the "Back to …" links, so it cannot be empty.', 'easy-folder-gallery' ) . '</p>';
+
+		$hide_id = self::OPTION . '-hide-title';
+		printf(
+			'<p><input type="checkbox" id="%1$s" name="%2$s[hide_title]" value="1"%3$s> <label for="%1$s">%4$s</label></p>',
+			esc_attr( $hide_id ),
+			esc_attr( self::OPTION ),
+			checked( $settings['hide_title'], 1, false ),
+			esc_html__( 'Hide the heading on the overview page (the title is still used in the back links).', 'easy-folder-gallery' )
+		);
 	}
 
 	public static function field_thumb_size() {
@@ -134,6 +155,16 @@ class EFG_Settings {
 			esc_attr( self::OPTION ),
 			(int) $settings['preview_count']
 		);
+	}
+
+	public static function field_columns() {
+		$settings = self::get();
+		printf(
+			'<input type="number" min="1" max="6" name="%s[columns]" value="%d">',
+			esc_attr( self::OPTION ),
+			(int) $settings['columns']
+		);
+		echo '<p class="description">' . esc_html__( 'Number of album/gallery cards per row (on small screens the grid always collapses to one column).', 'easy-folder-gallery' ) . '</p>';
 	}
 
 	public static function render_page() {

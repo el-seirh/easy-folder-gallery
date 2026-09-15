@@ -4,7 +4,7 @@ Tags: gallery, albums, folder, photos, lightbox
 Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 0.1.0
+Stable tag: 0.1.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -39,7 +39,7 @@ Easy Folder Gallery turns a simple folder structure into a browsable photo galle
 1. Install the plugin via *Plugins → Add New* (search for "Easy Folder Gallery"), or upload the ZIP under *Plugins → Add New → Upload Plugin*, then click *Activate*.
 2. Create the folder `wp-content/uploads/easy-folder-gallery/` and fill it with album folders containing gallery folders of images.
 3. Put the shortcode `[easy-folder-gallery]` on a page.
-4. Optionally adjust folder, title, thumbnail size and preview count under Settings → Easy Folder Gallery, or per shortcode: `[easy-folder-gallery dir="my-photos" title="Photos" thumb_size="200" preview_count="3"]`.
+4. Optionally adjust folder, title, thumbnail size, preview count and grid columns under Settings → Easy Folder Gallery, or per shortcode: `[easy-folder-gallery dir="my-photos" title="Photos" thumb_size="200" preview_count="3" columns="2"]`.
 
 == Frequently Asked Questions ==
 
@@ -60,6 +60,19 @@ Put a square `preview.jpg` into the gallery's `thumbs/` folder. Without one, the
 Delete it from the gallery's `thumbs/` folder and reload the page — it is regenerated.
 
 == Changelog ==
+
+= 0.1.3 =
+* Card descriptions are no longer styled as links, even though the whole card is one.
+* New "Grid columns" setting (default 2), also available as shortcode attribute `columns`.
+* Gallery card teaser text flows to the right of the preview image when there is room.
+* The overview title is mandatory now (it names the overview in the back links); a new checkbox hides the heading on the overview page instead (shortcode: `hide_title="1"`).
+* Simplified the gallery page back link to a single fully-linked "Back to <album>".
+
+= 0.1.2 =
+* Card titles and info texts now inherit the theme's typography instead of bringing their own color/size.
+
+= 0.1.1 =
+* Documentation improvements.
 
 = 0.1.0 =
 * Initial release: folder-based albums/galleries, lazy thumbnails, info texts, album preview thumbs, built-in lightbox, settings page.
