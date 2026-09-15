@@ -65,6 +65,13 @@ function wp_register_script($h, $s, $d, $v, $f = false) {}
 function wp_mkdir_p($dir) { return is_dir($dir) || mkdir($dir, 0755, true); }
 function is_wp_error($x) { return $x instanceof WP_Error; }
 function wp_get_image_editor($path) { return new WP_Error(); } // thumbnails "fail" -> full-size fallback
+$GLOBALS['efg_test_filters'] = array();
+function add_filter($hook, $cb) { $GLOBALS['efg_test_filters'][$hook][] = $cb; }
+function apply_filters($hook, $value, ...$args) {
+    foreach ($GLOBALS['efg_test_filters'][$hook] ?? array() as $cb) { $value = $cb($value, ...$args); }
+    return $value;
+}
+function do_action($hook, ...$args) {}
 
 // --- Load plugin classes -----------------------------------------------------
 require dirname(__DIR__) . '/includes/class-efg-settings.php';
@@ -116,6 +123,30 @@ $_GET = array('efg_album' => 'NoSuchAlbum');
 check('missing album', EFG_Renderer::shortcode(array()), array('(2)'));
 $_GET = array('efg_album' => 'Albumümlaut', 'efg_gallery' => 'NoSuchGallery');
 check('missing gallery', EFG_Renderer::shortcode(array()), array('Gallery One'));
+
+// Hostile extension filters must not break out of the gallery root:
+// the renderer re-validates everything a filter returns (defense in depth).
+$GLOBALS['efg_test_filters'] = array();
+add_filter('efg_albums', function ($albums) { $albums[] = '../../etc'; $albums[] = '..'; return $albums; });
+$_GET = array();
+check('hostile efg_albums', EFG_Renderer::shortcode(array()), array('efg-grid', 'Beach'), array('etc'));
+
+$GLOBALS['efg_test_filters'] = array();
+add_filter('efg_context', function ($ctx) { $ctx['album'] = '../..'; return $ctx; });
+$_GET = array('efg_album' => 'Albumümlaut');
+check('hostile efg_context', EFG_Renderer::shortcode(array()), array('efg-grid'), array('../..'));
+
+$GLOBALS['efg_test_filters'] = array();
+add_filter('efg_images', function ($images) { $images[] = '../../wp-config.php'; $images[] = '.htaccess'; return $images; });
+$_GET = array('efg_album' => 'Albumümlaut', 'efg_gallery' => 'Gallery One');
+check('hostile efg_images', EFG_Renderer::shortcode(array()), array('a1.jpg', 'a2.jpg'), array('wp-config', 'htaccess'));
+
+// A benign filter still works: hiding an album removes it from the overview.
+$GLOBALS['efg_test_filters'] = array();
+add_filter('efg_albums', function ($albums) { return array_values(array_diff($albums, array('Beach'))); });
+$_GET = array();
+check('benign efg_albums', EFG_Renderer::shortcode(array()), array('Albumümlaut'), array('Beach'));
+$GLOBALS['efg_test_filters'] = array();
 
 // XSS: folder names with special chars must come out escaped
 $_GET = array();

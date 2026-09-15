@@ -19,15 +19,19 @@ class EFG_Settings {
 	}
 
 	public static function defaults() {
-		return array(
-			'dir'           => 'easy-folder-gallery',
-			'title'         => __( 'Galleries', 'easy-folder-gallery' ),
-			/* translators: %s: title of the overview page or name of the album */
-			'back_text'     => __( 'Back to %s', 'easy-folder-gallery' ),
-			'thumb_size'    => 150,
-			'preview_count' => 3,
-			'columns'       => 2,
-			'hide_title'    => 0,
+		// The efg_default_settings hook is documented in HOOKS.md.
+		return apply_filters(
+			'efg_default_settings',
+			array(
+				'dir'           => 'easy-folder-gallery',
+				'title'         => __( 'Galleries', 'easy-folder-gallery' ),
+				/* translators: %s: title of the overview page or name of the album */
+				'back_text'     => __( 'Back to %s', 'easy-folder-gallery' ),
+				'thumb_size'    => 150,
+				'preview_count' => 3,
+				'columns'       => 2,
+				'hide_title'    => 0,
+			)
 		);
 	}
 
@@ -110,7 +114,7 @@ class EFG_Settings {
 		$defaults = self::defaults();
 		$title    = trim( sanitize_text_field( $input['title'] ?? '' ) );
 		$back     = trim( sanitize_text_field( $input['back_text'] ?? '' ) );
-		return array(
+		$clean    = array(
 			'dir'           => sanitize_text_field( $input['dir'] ?? $defaults['dir'] ),
 			'title'         => '' !== $title ? $title : $defaults['title'],
 			'back_text'     => '' !== $back ? $back : $defaults['back_text'],
@@ -119,6 +123,7 @@ class EFG_Settings {
 			'columns'       => max( 1, min( 6, (int) ( $input['columns'] ?? $defaults['columns'] ) ) ),
 			'hide_title'    => empty( $input['hide_title'] ) ? 0 : 1,
 		);
+		return apply_filters( 'efg_sanitized_settings', $clean, $input );
 	}
 
 	public static function field_dir() {

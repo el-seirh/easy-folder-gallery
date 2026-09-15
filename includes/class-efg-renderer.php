@@ -121,16 +121,76 @@ class EFG_Renderer {
 		$ctx['album']   = $album;
 		$ctx['gallery'] = $gallery;
 
+		// All efg_* hooks are documented in HOOKS.md.
+		$ctx = apply_filters( 'efg_context', $ctx, $atts );
+
+		// Defense in depth: folder names coming back from the filter are
+		// re-validated like the query vars were — extensions cannot
+		// (accidentally) reintroduce path traversal.
+		$ctx['album']   = self::valid_child( $ctx['root'], $ctx['album'] );
+		$ctx['gallery'] = '' === $ctx['album'] ? '' : self::valid_child( $ctx['root'] . '/' . $ctx['album'], $ctx['gallery'] );
+
+		$view = 'overview';
+		if ( '' !== $ctx['gallery'] ) {
+			$view = 'gallery';
+		} elseif ( '' !== $ctx['album'] ) {
+			$view = 'album';
+		}
+
 		wp_enqueue_style( 'easy-folder-gallery' );
 
-		if ( '' !== $gallery ) {
+		$pre = apply_filters( 'efg_pre_render', null, $view, $ctx );
+		if ( null !== $pre ) {
+			return $pre;
+		}
+
+		if ( 'gallery' === $view ) {
 			wp_enqueue_script( 'easy-folder-gallery' );
-			return self::render_gallery( $ctx );
+			$html = self::render_gallery( $ctx );
+		} elseif ( 'album' === $view ) {
+			$html = self::render_album( $ctx );
+		} else {
+			$html = self::render_overview( $ctx );
 		}
-		if ( '' !== $album ) {
-			return self::render_album( $ctx );
+		return apply_filters( 'efg_view_html', $html, $view, $ctx );
+	}
+
+	/**
+	 * $name if it is a safe folder name and an existing subfolder of $parent, '' otherwise.
+	 */
+	private static function valid_child( $parent, $name ) {
+		$name = (string) $name;
+		if ( '' === $name || self::sanitize_folder( $name ) !== $name ) {
+			return '';
 		}
-		return self::render_overview( $ctx );
+		return self::is_child_dir( $parent, $parent . '/' . $name ) ? $name : '';
+	}
+
+	/**
+	 * Keep only safe, existing subfolder names — applied to every folder list
+	 * coming back from an efg_* filter (defense in depth).
+	 */
+	private static function valid_children( $names, $parent ) {
+		$valid = array();
+		foreach ( (array) $names as $name ) {
+			if ( '' !== self::valid_child( $parent, $name ) ) {
+				$valid[] = $name;
+			}
+		}
+		return $valid;
+	}
+
+	/**
+	 * Absolute path of the gallery root folder. $dir defaults to the configured
+	 * setting and is sanitized exactly like the shortcode does it.
+	 */
+	public static function gallery_root( $dir = null ) {
+		if ( null === $dir ) {
+			$settings = EFG_Settings::get();
+			$dir      = $settings['dir'];
+		}
+		$uploads = wp_upload_dir();
+		return $uploads['basedir'] . '/' . self::sanitize_relative_dir( $dir );
 	}
 
 	/**
@@ -143,33 +203,36 @@ class EFG_Renderer {
 		}
 		$out .= '<div class="efg-grid">';
 
-		foreach ( self::subdirs( $ctx['root'] ) as $album ) {
+		$albums = self::valid_children( apply_filters( 'efg_albums', self::subdirs( $ctx['root'] ), $ctx ), $ctx['root'] );
+		foreach ( $albums as $album ) {
 			$album_path = $ctx['root'] . '/' . $album;
-			$galleries  = self::subdirs( $album_path );
+			$galleries  = self::valid_children( apply_filters( 'efg_galleries', self::subdirs( $album_path ), $album, $ctx ), $album_path );
 			$url        = add_query_arg( self::QUERY_ALBUM, rawurlencode( $album ), $ctx['base_url'] );
 
-			$out .= '<a class="efg-card" href="' . esc_url( $url ) . '">';
-			$out .= '<h2>' . esc_html( $album ) . ' <span class="efg-count">(' . count( $galleries ) . ')</span></h2>';
+			$card  = '<a class="efg-card" href="' . esc_url( $url ) . '">';
+			$card .= '<h2>' . esc_html( $album ) . ' <span class="efg-count">(' . count( $galleries ) . ')</span></h2>';
 
 			$previews = self::preview_thumbs( $album_path, $galleries, $ctx['preview_count'], $ctx['thumb_size'] );
 			if ( $previews ) {
-				$out .= '<div class="efg-previews">';
+				$card .= '<div class="efg-previews">';
 				foreach ( $previews as $relative_path ) {
-					$out .= sprintf(
+					$card .= sprintf(
 						'<img src="%s" width="%d" height="%d" alt="" loading="lazy">',
 						esc_url( $ctx['root_url'] . '/' . $album . '/' . $relative_path ),
 						$ctx['thumb_size'],
 						$ctx['thumb_size']
 					);
 				}
-				$out .= '</div>';
+				$card .= '</div>';
 			}
 
 			$info = self::info_text( $album_path . '/' . self::INFO_FILE );
 			if ( '' !== $info ) {
-				$out .= '<div class="efg-info">' . $info . '</div>';
+				$card .= '<div class="efg-info">' . $info . '</div>';
 			}
-			$out .= '</a>';
+			$card .= '</a>';
+
+			$out .= apply_filters( 'efg_card_html', $card, 'album', $album, $ctx );
 		}
 
 		$out .= '</div></div>';
@@ -193,7 +256,9 @@ class EFG_Renderer {
 		}
 
 		$out .= '<div class="efg-grid">';
-		foreach ( self::subdirs( $album_path ) as $gallery ) {
+
+		$galleries = self::valid_children( apply_filters( 'efg_galleries', self::subdirs( $album_path ), $ctx['album'], $ctx ), $album_path );
+		foreach ( $galleries as $gallery ) {
 			$gallery_path = $album_path . '/' . $gallery;
 			$url          = add_query_arg(
 				array(
@@ -203,13 +268,13 @@ class EFG_Renderer {
 				$ctx['base_url']
 			);
 
-			$out .= '<a class="efg-card" href="' . esc_url( $url ) . '">';
-			$out .= '<h2>' . esc_html( $gallery ) . '</h2>';
+			$card  = '<a class="efg-card" href="' . esc_url( $url ) . '">';
+			$card .= '<h2>' . esc_html( $gallery ) . '</h2>';
 
 			$preview = self::gallery_preview_image( $gallery_path );
 			if ( '' !== $preview ) {
 				$relative_path = self::thumb_relative_path( $gallery_path, $preview, $ctx['thumb_size'] );
-				$out          .= '<div class="efg-preview">' . sprintf(
+				$card         .= '<div class="efg-preview">' . sprintf(
 					'<img src="%s" width="%d" height="%d" alt="" loading="lazy">',
 					esc_url( $ctx['root_url'] . '/' . $ctx['album'] . '/' . $gallery . '/' . $relative_path ),
 					$ctx['thumb_size'],
@@ -219,9 +284,11 @@ class EFG_Renderer {
 
 			$info = self::info_text( $gallery_path . '/' . self::INFO_FILE );
 			if ( '' !== $info ) {
-				$out .= '<div class="efg-info">' . $info . '</div>';
+				$card .= '<div class="efg-info">' . $info . '</div>';
 			}
-			$out .= '</a>';
+			$card .= '</a>';
+
+			$out .= apply_filters( 'efg_card_html', $card, 'gallery', $gallery, $ctx );
 		}
 		$out .= '</div></div>';
 		return $out;
@@ -387,7 +454,11 @@ class EFG_Renderer {
 			return false;
 		}
 		$editor->resize( $size, $size, true );
-		return ! is_wp_error( $editor->save( $thumb ) );
+		if ( is_wp_error( $editor->save( $thumb ) ) ) {
+			return false;
+		}
+		do_action( 'efg_thumb_created', $thumb, $gallery_path . '/' . $image, $size );
+		return true;
 	}
 
 	/**
@@ -416,23 +487,33 @@ class EFG_Renderer {
 			$images[] = basename( $file );
 		}
 		sort( $images, SORT_STRING );
-		return $images;
+
+		// Defense in depth: only plain, non-hidden filenames survive the filter.
+		$safe = array();
+		foreach ( (array) apply_filters( 'efg_images', $images, $dir ) as $image ) {
+			if ( is_string( $image ) && '' !== $image && basename( $image ) === $image && '.' !== $image[0] ) {
+				$safe[] = $image;
+			}
+		}
+		return $safe;
 	}
 
 	/**
 	 * Read an info file; simple HTML (as in post content) is allowed.
 	 */
 	private static function info_text( $path ) {
-		if ( ! is_file( $path ) ) {
-			return '';
+		$html = '';
+		if ( is_file( $path ) ) {
+			$html = wp_kses_post( trim( (string) file_get_contents( $path ) ) );
 		}
-		return wp_kses_post( trim( (string) file_get_contents( $path ) ) );
+		return apply_filters( 'efg_info_text', $html, $path );
 	}
 
 	/**
 	 * A folder name from user input: no paths, no hidden folders.
+	 * Public so extensions validate names with exactly the same rules.
 	 */
-	private static function sanitize_folder( $value ) {
+	public static function sanitize_folder( $value ) {
 		$value = basename( trim( sanitize_text_field( (string) $value ) ) );
 		if ( '' === $value || '.' === $value[0] ) {
 			return '';
@@ -456,8 +537,9 @@ class EFG_Renderer {
 
 	/**
 	 * True if $child resolves to a real directory below $parent (blocks path traversal).
+	 * Public so extensions validate paths with exactly the same rules.
 	 */
-	private static function is_child_dir( $parent, $child ) {
+	public static function is_child_dir( $parent, $child ) {
 		$parent_real = realpath( $parent );
 		$child_real  = realpath( $child );
 		return false !== $parent_real && false !== $child_real && is_dir( $child_real )
