@@ -42,6 +42,7 @@ class EFG_Renderer {
 				'preview_count' => $settings['preview_count'],
 				'columns'       => $settings['columns'],
 				'hide_title'    => $settings['hide_title'],
+				'back_text'     => $settings['back_text'],
 			),
 			$atts,
 			'easy-folder-gallery'
@@ -51,9 +52,14 @@ class EFG_Renderer {
 		$dir     = self::sanitize_relative_dir( $atts['dir'] );
 
 		// The title is mandatory — it names the overview in the "Back to …" links.
-		$title = trim( (string) $atts['title'] );
+		$defaults = EFG_Settings::defaults();
+		$title    = trim( (string) $atts['title'] );
 		if ( '' === $title ) {
-			$title = EFG_Settings::defaults()['title'];
+			$title = $defaults['title'];
+		}
+		$back_text = trim( (string) $atts['back_text'] );
+		if ( '' === $back_text ) {
+			$back_text = $defaults['back_text'];
 		}
 
 		$ctx = array(
@@ -61,6 +67,7 @@ class EFG_Renderer {
 			'root_url'      => $uploads['baseurl'] . '/' . $dir,
 			'base_url'      => get_permalink(),
 			'title'         => $title,
+			'back_text'     => $back_text,
 			'thumb_size'    => max( 50, (int) $atts['thumb_size'] ),
 			'preview_count' => max( 1, (int) $atts['preview_count'] ),
 			'columns'       => max( 1, min( 6, (int) $atts['columns'] ) ),
@@ -156,11 +163,7 @@ class EFG_Renderer {
 
 		$out  = self::open_wrapper( $ctx );
 		$out .= '<p class="efg-backlink"><a href="' . esc_url( $ctx['base_url'] ) . '">&larr; ' .
-			sprintf(
-				/* translators: %s: title of the gallery overview page */
-				esc_html__( 'Back to %s', 'easy-folder-gallery' ),
-				esc_html( $ctx['title'] )
-			) . '</a></p>';
+			esc_html( self::back_label( $ctx, $ctx['title'] ) ) . '</a></p>';
 		$out .= '<h1 class="efg-title">' . esc_html( $ctx['album'] ) . '</h1>';
 
 		$info = self::info_text( $album_path . '/' . self::INFO_FILE );
@@ -212,11 +215,7 @@ class EFG_Renderer {
 		$album_url    = add_query_arg( self::QUERY_ALBUM, rawurlencode( $ctx['album'] ), $ctx['base_url'] );
 
 		$backlink = '<p class="efg-backlink"><a href="' . esc_url( $album_url ) . '">&larr; ' .
-			sprintf(
-				/* translators: %s: name of the album */
-				esc_html__( 'Back to %s', 'easy-folder-gallery' ),
-				esc_html( $ctx['album'] )
-			) . '</a></p>';
+			esc_html( self::back_label( $ctx, $ctx['album'] ) ) . '</a></p>';
 
 		$out  = '<div class="efg">' . $backlink;
 		$out .= '<h1 class="efg-title">' . esc_html( $ctx['gallery'] ) . '</h1>';
@@ -241,6 +240,17 @@ class EFG_Renderer {
 		}
 		$out .= '</div>' . $backlink . '</div>';
 		return $out;
+	}
+
+	/**
+	 * The back-link label: the configured text with %s replaced by the target
+	 * name; without a %s the name is simply appended.
+	 */
+	private static function back_label( $ctx, $target ) {
+		if ( false !== strpos( $ctx['back_text'], '%s' ) ) {
+			return str_replace( '%s', $target, $ctx['back_text'] );
+		}
+		return $ctx['back_text'] . ' ' . $target;
 	}
 
 	/**

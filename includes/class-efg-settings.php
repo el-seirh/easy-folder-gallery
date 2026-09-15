@@ -22,6 +22,8 @@ class EFG_Settings {
 		return array(
 			'dir'           => 'easy-folder-gallery',
 			'title'         => __( 'Galleries', 'easy-folder-gallery' ),
+			/* translators: %s: title of the overview page or name of the album */
+			'back_text'     => __( 'Back to %s', 'easy-folder-gallery' ),
 			'thumb_size'    => 150,
 			'preview_count' => 3,
 			'columns'       => 2,
@@ -74,6 +76,13 @@ class EFG_Settings {
 			'efg_main'
 		);
 		add_settings_field(
+			'efg_back_text',
+			__( 'Back link text', 'easy-folder-gallery' ),
+			array( __CLASS__, 'field_back_text' ),
+			'easy-folder-gallery',
+			'efg_main'
+		);
+		add_settings_field(
 			'efg_thumb_size',
 			__( 'Thumbnail size (px)', 'easy-folder-gallery' ),
 			array( __CLASS__, 'field_thumb_size' ),
@@ -100,9 +109,11 @@ class EFG_Settings {
 		$input    = (array) $input;
 		$defaults = self::defaults();
 		$title    = trim( sanitize_text_field( $input['title'] ?? '' ) );
+		$back     = trim( sanitize_text_field( $input['back_text'] ?? '' ) );
 		return array(
 			'dir'           => sanitize_text_field( $input['dir'] ?? $defaults['dir'] ),
 			'title'         => '' !== $title ? $title : $defaults['title'],
+			'back_text'     => '' !== $back ? $back : $defaults['back_text'],
 			'thumb_size'    => max( 50, min( 1000, (int) ( $input['thumb_size'] ?? $defaults['thumb_size'] ) ) ),
 			'preview_count' => max( 1, min( 10, (int) ( $input['preview_count'] ?? $defaults['preview_count'] ) ) ),
 			'columns'       => max( 1, min( 6, (int) ( $input['columns'] ?? $defaults['columns'] ) ) ),
@@ -139,6 +150,16 @@ class EFG_Settings {
 		);
 	}
 
+	public static function field_back_text() {
+		$settings = self::get();
+		printf(
+			'<input type="text" name="%s[back_text]" value="%s" class="regular-text">',
+			esc_attr( self::OPTION ),
+			esc_attr( $settings['back_text'] )
+		);
+		echo '<p class="description">' . esc_html__( 'Text of the "back" links on album and gallery pages. %s is replaced by the overview title or the album name (without %s, the name is appended). Leave empty to reset to the default.', 'easy-folder-gallery' ) . '</p>';
+	}
+
 	public static function field_thumb_size() {
 		$settings = self::get();
 		printf(
@@ -146,6 +167,7 @@ class EFG_Settings {
 			esc_attr( self::OPTION ),
 			(int) $settings['thumb_size']
 		);
+		echo '<p class="description">' . esc_html__( 'Width and height of the square thumbnails in pixels. Already generated thumbnails are not resized — delete a gallery\'s thumbs folder to regenerate them.', 'easy-folder-gallery' ) . '</p>';
 	}
 
 	public static function field_preview_count() {
@@ -155,6 +177,7 @@ class EFG_Settings {
 			esc_attr( self::OPTION ),
 			(int) $settings['preview_count']
 		);
+		echo '<p class="description">' . esc_html__( 'How many preview thumbnails each album card shows on the overview page.', 'easy-folder-gallery' ) . '</p>';
 	}
 
 	public static function field_columns() {

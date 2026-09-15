@@ -4,7 +4,7 @@ Tags: gallery, albums, folder, photos, lightbox
 Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 0.1.3
+Stable tag: 0.1.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -60,6 +60,9 @@ Put a square `preview.jpg` into the gallery's `thumbs/` folder. Without one, the
 Delete it from the gallery's `thumbs/` folder and reload the page — it is regenerated.
 
 == Changelog ==
+
+= 0.1.4 =
+* New "Back link text" setting (default: "Back to %s"); %s is replaced by the overview title or the album name. Also available as shortcode attribute `back_text`.
 
 = 0.1.3 =
 * Card descriptions are no longer styled as links, even though the whole card is one.
