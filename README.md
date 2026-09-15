@@ -23,7 +23,7 @@ gallery with albums, thumbnails and a lightbox.
 
 ## Usage
 
-1. Install and activate the plugin.
+1. Install the plugin: download the ZIP from the [latest release](https://github.com/el-seirh/easy-folder-gallery/releases/latest) and upload it under *Plugins → Add New → Upload Plugin* (or unzip it into `wp-content/plugins/`), then click *Activate*.
 2. Create the gallery root and fill it:
 
    ```

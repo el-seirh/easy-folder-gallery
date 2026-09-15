@@ -36,7 +36,7 @@ Easy Folder Gallery turns a simple folder structure into a browsable photo galle
 
 == Installation ==
 
-1. Install and activate the plugin.
+1. Install the plugin via *Plugins → Add New* (search for "Easy Folder Gallery"), or upload the ZIP under *Plugins → Add New → Upload Plugin*, then click *Activate*.
 2. Create the folder `wp-content/uploads/easy-folder-gallery/` and fill it with album folders containing gallery folders of images.
 3. Put the shortcode `[easy-folder-gallery]` on a page.
 4. Optionally adjust folder, title, thumbnail size and preview count under Settings → Easy Folder Gallery, or per shortcode: `[easy-folder-gallery dir="my-photos" title="Photos" thumb_size="200" preview_count="3"]`.
