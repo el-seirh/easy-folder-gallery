@@ -2,7 +2,7 @@
 
 A file-based photo gallery plugin for WordPress: **your folders are your albums and galleries.**
 No database entries, no upload UI — you manage your photos by uploading folders of images
-(via FTP, SSH, or your hoster's file manager), and the plugin renders them as a browsable
+(via (S)FTP, SSH, or your hoster's file manager), and the plugin renders them as a browsable
 gallery with albums, thumbnails and a lightbox.
 
 ## Why folder-based?
