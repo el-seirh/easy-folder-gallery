@@ -21,6 +21,27 @@ class EFG_Renderer {
 	public static function register() {
 		add_shortcode( 'easy-folder-gallery', array( __CLASS__, 'shortcode' ) );
 		add_action( 'init', array( __CLASS__, 'register_assets' ) );
+		add_action( 'template_redirect', array( __CLASS__, 'disable_page_cache' ) );
+	}
+
+	/**
+	 * Gallery pages must not be page-cached: their content comes from the
+	 * filesystem, so WordPress never notices changes and caches would serve
+	 * stale albums. DONOTCACHEPAGE covers the common cache plugins,
+	 * nocache_headers() covers hosting/CDN caches.
+	 */
+	public static function disable_page_cache() {
+		if ( ! is_singular() ) {
+			return;
+		}
+		$post = get_post();
+		if ( ! $post || ! has_shortcode( (string) $post->post_content, 'easy-folder-gallery' ) ) {
+			return;
+		}
+		if ( ! defined( 'DONOTCACHEPAGE' ) ) {
+			define( 'DONOTCACHEPAGE', true );
+		}
+		nocache_headers();
 	}
 
 	public static function register_assets() {
