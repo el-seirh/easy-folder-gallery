@@ -18,7 +18,7 @@ gallery with albums, thumbnails and a lightbox.
 - **Optional descriptions** from plain text files — `info.txt` (card teaser) and `info-long.txt` (gallery intro), simple HTML allowed
 - **Smart album previews**: up to 3 deterministic preview thumbs per album card; hand-pick one with `thumbs/preview.jpg`
 - **Built-in dependency-free lightbox** with keyboard navigation
-- **Theme-neutral styling**, overridable via CSS custom properties (`--efg-accent`, `--efg-thumb-size`, …)
+- **Theme-neutral styling**, overridable via CSS custom properties (`--efg-thumb-size`, `--efg-frame-bg`, …)
 - Hardened against path traversal; all output escaped
 
 ## Usage

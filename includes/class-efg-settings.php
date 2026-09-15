@@ -115,7 +115,7 @@ class EFG_Settings {
 			esc_attr( self::OPTION ),
 			esc_attr( $settings['title'] )
 		);
-		echo '<p class="description">' . esc_html__( 'Heading shown on the gallery overview page.', 'easy-folder-gallery' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Heading shown on the gallery overview page (leave empty if you want no extra heading).', 'easy-folder-gallery' ) . '</p>';
 	}
 
 	public static function field_thumb_size() {

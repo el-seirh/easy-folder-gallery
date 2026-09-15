@@ -1,7 +1,6 @@
 /* Easy Folder Gallery — theme-neutral defaults, overridable via CSS custom properties. */
 
 .efg {
-	--efg-accent: #8a4a4a;
 	--efg-card-border: rgba(150, 150, 150, 0.4);
 	--efg-card-hover-bg: rgba(150, 150, 150, 0.08);
 	--efg-frame-bg: #fff;
@@ -32,10 +31,9 @@
 	box-shadow: var(--efg-shadow);
 }
 
+/* Titles and info texts inherit the theme's typography. */
 .efg-card h2 {
 	margin: 5px 0 15px;
-	font-size: 1.2em;
-	color: var(--efg-accent);
 }
 
 .efg-count {
@@ -70,7 +68,6 @@
 
 .efg-info {
 	margin-top: 10px;
-	opacity: 0.85;
 }
 
 .efg-info-long {
