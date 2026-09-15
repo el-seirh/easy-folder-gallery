@@ -1,8 +1,5 @@
 # IDE
 .idea/
 
-# Session/working notes
-HANDOVER.md
-
 # Build artifacts
 *.zip
