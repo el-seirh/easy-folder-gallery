@@ -68,6 +68,11 @@ Run the smoke test (no WordPress needed): `php tests/smoke-test.php`
 Releases are built by the GitHub Actions workflow on version tags (`v*`), producing an
 installable ZIP.
 
+## Support the project
+
+Easy Folder Gallery is free and open source. If it saves you time,
+[a small donation via PayPal](https://paypal.me/lubamclean) is appreciated!
+
 ## License
 
 GPL v2 or later — see [LICENSE](LICENSE).

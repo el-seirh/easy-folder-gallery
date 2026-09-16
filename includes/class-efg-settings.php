@@ -215,6 +215,17 @@ class EFG_Settings {
 				submit_button();
 				?>
 			</form>
+			<p class="description">
+				<span class="dashicons dashicons-coffee" aria-hidden="true"></span>
+				<?php
+				printf(
+					/* translators: %s: donation link */
+					esc_html__( 'This plugin runs on folders and coffee. The folders are yours — %s', 'easy-folder-gallery' ),
+					'<a href="https://paypal.me/lubamclean" target="_blank" rel="noopener">' .
+						esc_html__( 'wanna buy the coffee? ☕', 'easy-folder-gallery' ) . '</a>'
+				);
+				?>
+			</p>
 		</div>
 		<?php
 	}

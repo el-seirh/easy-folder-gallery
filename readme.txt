@@ -1,10 +1,11 @@
 === Easy Folder Gallery ===
 Contributors: lubamclean
+Donate link: https://paypal.me/lubamclean
 Tags: gallery, albums, folder, photos, lightbox
 Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 0.2.0
+Stable tag: 0.2.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -60,6 +61,9 @@ Put a square `preview.jpg` into the gallery's `thumbs/` folder. Without one, the
 Delete it from the gallery's `thumbs/` folder and reload the page — it is regenerated.
 
 == Changelog ==
+
+= 0.2.1 =
+* Added a donation link (readme header, settings page footer).
 
 = 0.2.0 =
 * Extension API for add-on plugins: filters for albums/galleries/images/info texts (`efg_albums`, `efg_galleries`, `efg_images`, `efg_info_text`), rendering hooks (`efg_pre_render`, `efg_card_html`, `efg_view_html`, `efg_context`), an `efg_thumb_created` action, settings filters (`efg_default_settings`, `efg_sanitized_settings`) and public path/validation helpers. See HOOKS.md. No behavior changes without listeners.
